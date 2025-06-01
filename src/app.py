@@ -3,6 +3,7 @@ from flask import Flask, current_app
 import sqlalchemy as sa
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 # Base declarativa do SQLAlchemy 2.0, a partir da qual todos os modelos ORM devem herdar para mapear classes Python a tabelas do banco de dados.
 class Base(DeclarativeBase):
@@ -11,6 +12,7 @@ class Base(DeclarativeBase):
 
 # Instância do SQLAlchemy configurada para usar a base declarativa personalizada `Base` nos modelos ORM.
 db = SQLAlchemy(model_class=Base)
+migrate = Migrate()
 
 class User(db.Model):
     """
@@ -116,6 +118,7 @@ def create_app(test_config=None):
     
     # register cli commands
     app.cli.add_command(init_db_command)
+    migrate.init_app(app, db)
     
     # Initialize extensions
     db.init_app(app)
