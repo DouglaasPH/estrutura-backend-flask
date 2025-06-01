@@ -4,6 +4,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_jwt_extended import JWTManager
 
 # Base declarativa do SQLAlchemy 2.0, a partir da qual todos os modelos ORM devem herdar para mapear classes Python a tabelas do banco de dados.
 class Base(DeclarativeBase):
@@ -13,6 +14,7 @@ class Base(DeclarativeBase):
 # Instância do SQLAlchemy configurada para usar a base declarativa personalizada `Base` nos modelos ORM.
 db = SQLAlchemy(model_class=Base)
 migrate = Migrate()
+jwt = JWTManager()
 
 class User(db.Model):
     """
@@ -26,8 +28,10 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)
     username: Mapped[str] = mapped_column(sa.String, nullable=False)
     password: Mapped[str] = mapped_column(sa.String, nullable=False)
+    role_id: Mapped[int] = mapped_column(sa.ForeignKey('role.id'))
     
     tasks: Mapped[list['Task']] = relationship(back_populates='user')
+    role: Mapped['Role'] = relationship(back_populates='user')
     
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, name={self.username!r})"
@@ -53,6 +57,16 @@ class Task(db.Model):
     
     def __repr__(self) -> str:
         return f"Task(id={self.id!r}, title={self.title!r}, done={self.done!r})"
+
+
+class Role(db.Model):
+    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(sa.String, nullable=False)
+
+    user: Mapped[list["User"]] = relationship(back_populates='role')
+    
+    def __repr__(self) -> str:
+        return f"Role(id={self.id!r}, name={self.name!r})"
 
 
 @click.command("init-db")
@@ -107,6 +121,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         SQLALCHEMY_DATABASE_URI='sqlite:///diotasks.sqlite',
+        JWT_SECRET_KEY='super-secret',
     )
     
     if test_config is None:
@@ -119,14 +134,17 @@ def create_app(test_config=None):
     # register cli commands
     app.cli.add_command(init_db_command)
     migrate.init_app(app, db)
+    jwt.init_app(app)
     
     # Initialize extensions
     db.init_app(app)
     
-    # TODO: register blueprints
-    from src.controllers import user, task
+    # register blueprints
+    from src.controllers import user, task, auth, role
     
     app.register_blueprint(user.app)
     app.register_blueprint(task.app)
+    app.register_blueprint(auth.app)
+    app.register_blueprint(role.app)
     
     return app
