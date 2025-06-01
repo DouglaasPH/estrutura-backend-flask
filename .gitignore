@@ -1,0 +1,21 @@
+# Ambiente virtual
+.venv/
+
+# Arquivos de dependências
+poetry.lock
+
+# Bytecode do Python
+__pycache__/
+*.py[cod]
+
+# Arquivos de log e temporários
+*.log
+*.tmp
+
+# IDEs
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
+Thumbs.db
