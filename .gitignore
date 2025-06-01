@@ -19,3 +19,10 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Ignorar banco de dados SQLite
+*.sqlite
+*.db
+
+# Ignorar pasta de configuração e banco local do Flask
+instance/
