@@ -1,7 +1,9 @@
 from http import HTTPStatus
 from flask import Blueprint, request
 from src.app import User, db
+from src.utils import requires_user, requires_role
 from sqlalchemy import inspect
+from flask_jwt_extended import jwt_required
 
 # Define um Blueprint chamado 'user' para agrupar rotas relacionadas aos usuários,
 # com prefixo '/users' nas URLs.
@@ -17,11 +19,14 @@ def _create_user():
     data = request.json
     user = User(
         username=data['username'],
+        password=data['password'],
+        role_id=data['role_id']
     )
     db.session.add(user)
     db.session.commit()
 
-
+@jwt_required()
+@requires_role('admin')
 def _list_users():
     """
     Retorna uma lista de todos os usuários cadastrados no banco de dados.
@@ -60,6 +65,8 @@ def list_or_create_user():
 
 
 @app.route('/<int:user_id>')
+@jwt_required()
+@requires_user()
 def get_user(user_id):
     """
     Retorna os detalhes de um usuário específico junto com suas tarefas associadas.
