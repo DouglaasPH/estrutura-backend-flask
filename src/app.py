@@ -120,5 +120,9 @@ def create_app(test_config=None):
     db.init_app(app)
     
     # TODO: register blueprints
+    from src.controllers import user, task
+    
+    app.register_blueprint(user.app)
+    app.register_blueprint(task.app)
     
     return app
